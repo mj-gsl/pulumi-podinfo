@@ -1,0 +1,57 @@
+- hosts: ec2_instances
+  become: yes
+  tasks:
+    - name: Update the apt package index
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Install required packages
+      ansible.builtin.apt:
+        name: "{{ packages }}"
+        state: latest
+      vars:
+        packages:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+          - python3-pip
+
+    - name: Add the official Docker GPG key
+      ansible.builtin.apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Set up the stable repository
+      ansible.builtin.apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+        state: present
+
+    - name: Install Docker CE
+      ansible.builtin.apt:
+        name: docker-ce
+        state: latest
+
+    - name: Ensure Docker service is running and enabled
+      ansible.builtin.systemd:
+        name: docker
+        enabled: yes
+        state: started
+
+    - name: Install Docker SDK for Python
+      ansible.builtin.pip:
+        name: docker
+        state: present
+
+    - name: Pull Podinfo Docker image
+      community.general.docker_image:
+        name: stefanprodan/podinfo
+        source: pull
+
+    - name: Run Podinfo container
+      community.general.docker_container:
+        name: podinfo
+        image: stefanprodan/podinfo
+        state: started
+        ports:
+          - "80:9898"

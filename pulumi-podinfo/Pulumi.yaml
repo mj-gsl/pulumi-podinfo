@@ -1,0 +1,10 @@
+name: podinfo
+runtime:
+  name: python
+  options:
+    virtualenv: venv
+description: Deploy podinfo on EC2 with Pulumi
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: aws-python
